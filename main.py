@@ -32,8 +32,42 @@ def encrypt_ecb(file_name):
     encrypted_file.close()
 
 # Takes a file, and returns the encrypted version using CBC block cipher
-def encrypt_cbc(path):
-    pass
+def encrypt_cbc(file_name):
+    image_file = open(f"test_images/{file_name}", "rb")
+    encrypted_file = open(f"test_images/cbc_encrypted_{file_name}", "wb")
+    header = image_file.read(54)  # 54 bytes is header size
+    encrypted_file.write(header)  # the header does not get encrypted
+
+    key = random.randbytes(16)  # key size is 128 bits == 16 bytes
+    IV = random.randbytes(16)  # IV size is 1 block = 128 bits = 8 bytes
+
+    # Read and encrypt blocks until there is no more data left
+    while True:
+        data = image_file.read(16)  # 1 block == 128 bits == 16 bytes
+
+        if not data:
+            break  # No more data to read
+
+        # Need to pack the block if it is not 16 bytes
+        if len(data) < 16:
+            data = pad(data)
+
+        # XOR data with the previous block
+        data = (int.from_bytes(data, byteorder="big") ^ int.from_bytes(IV, byteorder="big")).to_bytes(16, byteorder="big")
+
+        # Encrypt the block
+        cipher = AES.new(key, AES.MODE_ECB)
+        encrypted_data = cipher.encrypt(data)
+
+        # Write to encrypted file
+        encrypted_file.write(encrypted_data)
+
+        # Set IV to this block so the next one can use it
+        IV = encrypted_data
+
+    image_file.close()
+    encrypted_file.close()
+
 
 # Returns padded version of input_data, following PKCS#7 padding
 def pad(input_data):
@@ -47,4 +81,4 @@ def pad(input_data):
     return result.to_bytes(16, byteorder="big")
 
 if __name__ == '__main__':
-    encrypt_ecb("cp-logo.bmp")
+    encrypt_cbc("mustang.bmp")
