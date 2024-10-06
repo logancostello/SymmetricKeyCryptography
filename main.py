@@ -94,6 +94,7 @@ def encrypt_cbc_args(text, key, iv):
     text = text.encode()
     encryptedString = b""
     while byteIndex < length:
+        print(byteIndex, text[byteIndex: byteIndex + 16])
 
         data = bytes(text[byteIndex: byteIndex + 16])
         # Need to pack the block if it is not 16 bytes
