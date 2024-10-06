@@ -20,10 +20,13 @@ def submit(userString, key, iv):
 def verify(cipherText, key, iv):
     cipher = AES.new(key, AES.MODE_CBC, iv)
     plaintext = cipher.decrypt(cipherText)
+    print(plaintext, len(plaintext))
     plaintext = unpad(plaintext, 16).decode()
     check = ";admin=true;"
-
+    print(plaintext, len(plaintext))
     return check in plaintext
+
+
 
 def combination(text):
     key = random.randbytes(16)  # key size is 128 bits == 16 bytes
@@ -32,7 +35,15 @@ def combination(text):
     eString = submit(text, key, iv)
 
     # Gotta do shit here
+    # 49 - 55 - 60 "<admin-true<"
+    eString = bytearray(eString)
+    eString[32] ^= ord("f") ^ ord(";")
+    eString[38] ^= ord("f") ^ ord("=")
+    eString[44] ^= ord("f") ^ ord(";")
+    eString = bytes(eString)
 
     contains = verify(eString, key, iv)
 
     return contains
+
+print(combination("dontcaredontfadminftruef"))
