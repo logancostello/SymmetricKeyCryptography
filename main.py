@@ -80,5 +80,40 @@ def pad(input_data):
     result = pad_mask & int.from_bytes(input_data, byteorder="big")
     return result.to_bytes(16, byteorder="big")
 
+# Simpler padding for new encrypt func
+def pad2(numPadding):
+    padding = bytes([numPadding] * numPadding)
+    return padding
+
+# CB that takes IV and key as input
+def encrypt_cbc_args(text, key, iv):
+    length = len(text)
+        
+    # Read and encrypt blocks until there is no more data left
+    byteIndex = 0
+    text = text.encode()
+    encryptedString = b""
+    while byteIndex < length:
+
+        data = bytes(text[byteIndex: byteIndex + 16])
+        # Need to pack the block if it is not 16 bytes
+        if len(data) < 16:
+            data += pad2(16 - len(data))
+
+        # XOR data with the previous block
+        data = (int.from_bytes(data, byteorder="big") ^ int.from_bytes(iv, byteorder="big")).to_bytes(16, byteorder="big")
+
+        # Encrypt the block
+        cipher = AES.new(key, AES.MODE_ECB)
+        encrypted_data = cipher.encrypt(data)
+
+        # Set IV to this block so the next one can use it
+        iv = encrypted_data
+        encryptedString += encrypted_data
+
+        byteIndex += 16
+    return encryptedString
+
+
 if __name__ == '__main__':
     encrypt_cbc("mustang.bmp")
